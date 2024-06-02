@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('./partials/head.ejs') %>
+    </head>
+
+    <body class="bg-secondary">
+        <%- include('./partials/navbar.ejs') %>
+
+        <div class="container mt-2">
+            <div class="row text-center">
+                <% user.guilds.forEach(guild => { %>
+                    <div class="col p-4 m-4 border border-opacity-50 border-dark rounded-3">
+                        <img width="128" height="128" class="rounded mt-3" <% if (guild.icon == null) { %>
+                            src="https://cdn.discordapp.com/embed/avatars/0.png">
+                        <% } else { %>
+                          src="https://cdn.discordapp.com/icons/<%= guild.id %>/<%= guild.icon %>">
+                        <% } %>
+                        <p><%= guild.name %></p>
+                    </div>
+                <% }) %>
+            </div>
+        </div>
+
+        <%- include('./partials/bs.ejs') %>
+    </body>
+</html>
