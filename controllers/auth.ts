@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import env from "../env";
-import { API_ENDPOINT, getUserInfo } from "../utils/api";
+import { API_ENDPOINT, AccessTokenResponse, getUserInfo } from "../utils/api";
 import User from "../classes/User";
 
 const redirectURI = (!env.APP_URL.endsWith("/") ? env.APP_URL + "/" : env.APP_URL) + "oauth_redirect";
@@ -45,7 +45,7 @@ export async function oauthRedirect(req: Request, res: Response, next: NextFunct
         }
     }) as any;
     
-    const user = new User(accessTokenRequest.access_token, accessTokenRequest.refresh_token);
+    const user = new User(accessTokenRequest.access_token, accessTokenRequest.refresh_token, accessTokenRequest.expires_in);
     const userInfo = await getUserInfo(user);
     user.id = userInfo.id;
     user.name = userInfo.global_name;
@@ -83,17 +83,9 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
             next(err);
             return null;
         }
-    }) as any;
+    });
 
     req.session.destroy(() => {
         return res.redirect("/");
     });
-}
-
-type AccessTokenResponse = {
-    access_token: string,
-    token_type: string,
-    expires_in: number,
-    refresh_token: string,
-    score: string
 }

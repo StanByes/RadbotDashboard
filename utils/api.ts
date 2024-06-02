@@ -1,10 +1,25 @@
 import { guildsID } from "../data";
 import User from "../classes/User";
+import env from "../env";
 
 export const API_ENDPOINT = "https://discord.com/api";
 
-function refreshToken(user: User) {
+export async function refreshToken(user: User) {
+    const data = {
+        grant_type: "refresh_token",
+        refresh_token: user.refresh_token,
+        client_id: env.CLIENT_ID,
+        client_secret: env.CLIENT_SECRET
+    };
 
+    const request = await fetch(API_ENDPOINT + "/oauth2/token", {
+        body: new URLSearchParams(data),
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        method: "POST"
+    });
+    return await request.json() as AccessTokenResponse;
 }
 
 export async function getUserInfo(user: User) {
@@ -47,8 +62,16 @@ type DiscordUser = {
     }
 }
 
-export interface Guild {
+export type Guild = {
     id: string,
     name: string,
     icon: string
+}
+
+export type AccessTokenResponse = {
+    access_token: string,
+    token_type: string,
+    expires_in: number,
+    refresh_token: string,
+    score: string
 }
