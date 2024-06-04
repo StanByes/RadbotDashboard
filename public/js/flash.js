@@ -6,11 +6,13 @@ function opacity(i) {
     }, 5 * i);
 }
 
-setTimeout(() => {
-    for (let i = 0; i <= 100; i++)
-        opacity(i);
-
+if (flashMessage.length != 0) {
     setTimeout(() => {
-        flashMessage[0].remove();
-    }, 5 * 102)
-}, 2000);
+        for (let i = 0; i <= 100; i++)
+            opacity(i);
+
+        setTimeout(() => {
+            flashMessage[0].remove();
+        }, 5 * 102)
+    }, 2000);
+}
