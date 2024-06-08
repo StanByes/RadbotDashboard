@@ -132,3 +132,4 @@ dist
 # Project #
 data/*
 !data/.gitkeep
+!data/guilds.json

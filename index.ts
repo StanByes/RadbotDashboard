@@ -8,9 +8,10 @@ import env from "./env";
 
 import User from "./classes/User";
 import { login, logout, oauthRedirect } from "./controllers/auth";
-import { getUserGuilds, refreshToken } from "./utils/api";
+import { refreshToken } from "./utils/api";
 import guildRouter from "./controllers/guild";
-import { error, success } from "./utils/flash";
+import fileRouter from "./controllers/file";
+import createHttpError, { HttpError } from "http-errors";
 
 logger.info("Application starting...");
 const startTime = Date.now();
@@ -43,7 +44,7 @@ declare module "express-session" {
 // Init Routes //
 logger.info("Init routes...");
 app.use(async (req: Request, res: Response, next: NextFunction) => {
-    logger.log("info", "Request : " + req.url + " - " + req.ip);
+    logger.log("info", "Request : [" + req.method + "] " + req.url + " - " + req.ip);
 
     if (req.session.user == null) { // Auto Connect
         if (req.url.includes("/login") || req.url.includes("/oauth_redirect"))
@@ -59,6 +60,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
         user.avatar = req.session.user.avatar;
 
         req.session.user = user;
+        logger.log("auth", "Token refreshed for " + user.name + " ( " + user.id + " )");
     }
 
     // Add User Data //
@@ -67,6 +69,13 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     // Add Flash Message //
     res.locals.flash = req.session.flash;
     req.session.flash = null;
+
+    // Add Time Format Function //
+    res.locals.format = (dateContent: string) => {
+        const date = new Date(dateContent);
+        const month = date.getUTCMonth() + 1;
+        return `${(date.getUTCDate() < 10 ? "0" : "") + date.getUTCDate()}/${(month < 10 ? "0" : "") + month}/${date.getFullYear()} ${date.getUTCHours()}:${date.getMinutes()}`;
+    }
 
     return next();
 });
@@ -79,19 +88,26 @@ app.get("/logout", logout);
 // Guild Routes //
 app.use("/guilds", guildRouter);
 
+// File Routes //
+app.use("/files", fileRouter);
+
 // Views Routes //
-app.get("/", async (req: Request, res: Response) => {
+app.get("/", async (req: Request, res: Response, next: NextFunction) => {
     const user = req.session.user;
     if (user == null)
-        return res.status(500);
+        return next(createHttpError(500));
 
-    res.locals.user.guilds = await getUserGuilds(user);
     return res.render("index");
-})
-  
+});
+
+app.get("/profile", async (req: Request, res: Response, next: NextFunction) => {
+    return res.render("profile");
+});
+
+
+
 // error handler //
-app.use(function(err: any, req: Request, res: Response, next: NextFunction) {
-    console.log(typeof err);
+app.use(function(err: HttpError, req: Request, res: Response, next: NextFunction) {
     logger.error(`Request Error : ${req.method} ${req.originalUrl} [${err.statusCode || 500}] ${err.message}`);
     if (typeof err == "number") {
         return res.status(err).json({code: err, message: err < 500 ? "Client Error" : "Server Error"});
@@ -104,9 +120,6 @@ app.use(function(err: any, req: Request, res: Response, next: NextFunction) {
 
 // Attach Port //
 const port = env.PORT || 3000;
-app.listen(process.env.PORT || 3000, () => {
+app.listen(port, () => {
     logger.info("Connect to " + port + " in " + ((Date.now() - startTime) / 1000) + " seconds.");
-})
-
-
-export default app;
+});

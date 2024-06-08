@@ -1,4 +1,3 @@
-import { guildsID } from "../data";
 import User from "../classes/User";
 import env from "../env";
 
@@ -29,14 +28,7 @@ export async function getUserInfo(user: User) {
 
 export async function getUserGuilds(user: User) {
     const request = await fetch(API_ENDPOINT + "/users/@me/guilds", {method: "GET", headers: header(user)});
-    const data: Guild[] = await request.json();
-
-    const result: Guild[] = [];
-    for (let i = 0; i < data.length; i++)
-        if (guildsID().includes(data[i].id))
-            result.push(data[i]);
-
-    return result;
+    return await request.json() as Guild[];
 }
 
 function header(user: User) {

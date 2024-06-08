@@ -1,7 +1,12 @@
 import winston, { format } from "winston";
 
 const logger = winston.createLogger({
-    level: 'info',
+    levels: {
+        auth: 0,
+        error: 1,
+        warn: 2,
+        info: 3
+    },
     format: format.combine(
         format.timestamp(),
         format.json()
@@ -9,8 +14,8 @@ const logger = winston.createLogger({
     transports: [
         new winston.transports.File({ dirname: "logs", filename: "error.log", level: "error" }),
         new winston.transports.File({ dirname: "logs", filename: "warn.log", level: "warn" }),
-        new winston.transports.File({ dirname: "logs", filename: "info.log", level: "info" }),
-        new winston.transports.File({ dirname: "logs", filename: "debug.log", level: "debug" })
+        new winston.transports.File({ dirname: "logs", filename: "auth.log", level: "auth" }),
+        new winston.transports.File({ dirname: "logs", filename: "combined.log", level: "info" })
     ]
 });
 

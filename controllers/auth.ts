@@ -1,7 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import env from "../env";
-import { API_ENDPOINT, AccessTokenResponse, getUserInfo } from "../utils/api";
+import { API_ENDPOINT, AccessTokenResponse, getUserGuilds, getUserInfo } from "../utils/api";
 import User from "../classes/User";
+import logger from "../logger";
+import { existsSync, mkdirSync } from "fs";
+import { FileModel } from "../models/FileModel";
+import { botGuilds } from "../data";
 
 const redirectURI = (!env.APP_URL.endsWith("/") ? env.APP_URL + "/" : env.APP_URL) + "oauth_redirect";
 
@@ -47,15 +51,24 @@ export async function oauthRedirect(req: Request, res: Response, next: NextFunct
     
     const user = new User(accessTokenRequest.access_token, accessTokenRequest.refresh_token, accessTokenRequest.expires_in);
     const userInfo = await getUserInfo(user);
+    
     user.id = userInfo.id;
     user.name = userInfo.global_name;
     user.avatar = userInfo.avatar;
+
+    user.guilds = (await getUserGuilds(user)).filter(g => botGuilds().includes(g.id));
+    user.files = await FileModel.getFilesByUploader(user.id);
+
+    // Create data folder
+    if (!existsSync(`data/${user.id}/Soundboard`))
+        mkdirSync(`data/${user.id}/Soundboard`);
 
     req.session.user = user;
     req.session.regenerate(() => {
         req.session.save();
     });
 
+    logger.log("auth", "Token created for " + user.name + " ( " + user.id + " )");
     res.redirect("/");
 }
 
@@ -85,6 +98,7 @@ export async function logout(req: Request, res: Response, next: NextFunction) {
         }
     });
 
+    logger.log("auth", "Token revoked for " + req.session.user!.name + " ( " + req.session.user!.id + " )");
     req.session.destroy(() => {
         return res.redirect("/");
     });

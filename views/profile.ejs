@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <%- include('./partials/head.ejs') %>
+    </head>
+
+    <body class="bg-secondary">
+        <%- include('./partials/header.ejs') %>
+
+        <div id="renameModal" class="modal fade" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form id="rename-form" action="/files/" method="post">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Renommer un fichier</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <h5 id="rename-filename" class="text-center"></h5>
+                            
+                            <label class="form-label" for="rename-input">Nouveau nom</label>
+                            <input class="form-control" type="text" name="name" id="rename-input">
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-danger" data-bs-dismiss="modal">Fermer</button>
+                            <button type="submit" class="btn btn-success">Envoyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+          </div>
+
+        <div class="container-fluid mt-2">
+            <h4>Vos fichiers</h4>
+            <table class="table table-striped table-dark">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Nom</th>
+                        <th scope="col">Poids (bytes)</th>
+                        <th scope="col">Contenu</th>
+                        <th scope="col">Serveurs</th>
+                        <th scope="col">Date d'ajout</th>
+                        <th scope="col">Dernière modification</th>
+                        <th scope="col">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <%  for (let i = 0; i < user.files.length; i ++) { %>
+                        <tr>
+                            <th scope="row"><%= i %></th>
+                            <td><%= user.files[i].name %></td>
+                            <td><%= user.files[i].size %></td>
+                            <td><audio controls preload="auto" src="/files/<%= user.files[i].name %>"></audio></td>
+                            <td><%= user.files[i].link_guilds.length == 0 ? "Aucun" : user.files[i].link_guilds.map(g => {
+                                let guild = user.guilds.find(gu => gu.id == g);
+                                if (guild)
+                                    return guild.name;
+
+                                return "Serveur Inconnu";
+                            }).join(" | ") %></td>
+                            <td><%= format(user.files[i].uploaded_at) %></td>
+                            <td><%= format(user.files[i].edited_at) %></td>
+                            <td>
+                                <button class="btn btn-success rename-file" data-filename="<%= user.files[i].name %>">Renommer</button>
+                                <a href="/files/delete/<%= user.files[i].name %>"><button class="btn btn-danger">Supprimer</button></a>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+
+            <div class="mt-4 d-grid gap-2">
+                <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#upload" aria-expanded="false" aria-controls="collapseUpload">
+                    Ajouter un nouveau son
+                </button>
+            </div>
+
+            <div class=" mt-2 collapse" id="upload">
+                <h4>Ajout d'un son</h4>
+                <form action="/files" enctype="multipart/form-data" method="post" class="mt-2">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nom du son</label>
+                        <input type="text" class="form-control" name="name" id="name">
+                        </div>
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Fichier</label>
+                        <input type="file" class="form-control" id="file" name="file" accept="audio/*"></input>
+                    </div>
+                    <div class="mb-3 d-grid gap-2 col-6 mx-auto">
+                        <button class="btn btn-success" type="submit">
+                            Envoyer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <%- include('./partials/js.ejs') %>
+
+        <script>
+            const renameModal = new bootstrap.Modal(document.getElementById("renameModal"), { backdrop: true, focus: true, keyboard: true });
+            const renameFilename = document.getElementById("rename-filename");
+            const renameForm = document.getElementById("rename-form");
+            const renameInput = document.getElementById("rename-input");
+
+            const renameButtons = document.getElementsByClassName("rename-file");
+            for (let button of renameButtons) {
+                let filename = button.dataset.filename;
+                if (!filename)
+                    continue;
+
+                button.addEventListener("click", (e) => {
+                    renameFilename.innerHTML = filename;
+                    renameForm.action = "/files/" + filename;
+                    renameInput.value = "";
+
+                    renameModal.show();
+                });
+            }
+        </script>
+    </body>
+</html>

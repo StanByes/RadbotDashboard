@@ -1,11 +1,8 @@
 import { NextFunction, Request, Response, Router } from "express";
 import createHttpError from "http-errors";
-import multer from "multer";
-import audioExtensions from "audio-extensions/audioExtensions.json";
-import { renameSync }from "fs";
 
-import { getFileByGuild, guildsID } from "../data";
 import { error, success } from "../utils/flash";
+import { FileModel } from "../models/FileModel";
 
 const guildRouter = Router();
 
@@ -15,34 +12,63 @@ guildRouter.get("/:guildId", (req: Request, res: Response, next: NextFunction) =
 
     let guild = null;
     const guildId = req.params.guildId;
-    if (guildsID().includes(guildId)) {
+    if (req.session.user!.guilds.find(g => g.id == guildId))
         guild = {
-            id: guildId,
-            files: getFileByGuild(guildId)
+            id: guildId
         };
-    }
 
     return res.render("guild", { guild: guild });
 });
 
-guildRouter.post("/:guildId/upload", multer({ dest: "uploads/"}).single("file"), (req: Request, res: Response, next: NextFunction) => {
-    if (!req.body.name || !req.file || req.body.name == "" || req.body.name == " ") {
-        error(req, "Veuillez définir un nom et choisir un fichier");
-        return res.redirect("/guilds/" + req.params.guildId);
-    }
-    const file = req.file;
+guildRouter.post("/:guildId/link", async (req: Request, res: Response, next: NextFunction) => {
+    const guildId = req.params.guildId;
+    if (!req.session.user!.guilds.find(g => g.id == guildId))
+        return next(createHttpError(403));
 
-    const fileSplitName = file.originalname.split(".");
-    const extension = fileSplitName[fileSplitName.length - 1];
-
-    if (!audioExtensions.includes(extension)) {
-        error(req, "Veuillez choisir un fichier audio");
-        return res.redirect("/guilds/" + req.params.guildId);
+    const returnURL = "/guilds/" + guildId;
+    if (!req.body.filename || req.body.filename == "" || req.body.filename == " ") {
+        error(req, "Veuillez choisir un fichier");
+        return res.redirect(returnURL);
     }
 
-    renameSync(file.path, `data/${req.params.guildId}/Soundboard/${req.body.name.replaceAll(" ", "_")}.${extension}`);
-    success(req, "Fichier ajouté avec succès");
-    return res.redirect("/guilds/" + req.params.guildId);
-})
+    const file = req.session.user!.files.find(f => f.name == req.body.filename);
+    if (!file) {
+        error(req, "Erreur Interne : Fichier introuvable");
+        return res.redirect(returnURL);
+    }
+
+    if (file.link_guilds.includes(guildId))
+        return next(createHttpError(409));
+
+    file.link_guilds.push(guildId);
+    file.edited_at = new Date();
+    FileModel.editLinkGuilds(file);
+
+    success(req, "Fichier relié avec succès");
+    return res.redirect(returnURL);
+});
+
+guildRouter.get("/:guildId/unlink/:name", async (req: Request, res: Response, next: NextFunction) => {
+    const guildId = req.params.guildId;
+    if (!req.session.user!.guilds.find(g => g.id == guildId))
+        return next(createHttpError(403));
+
+    const returnURL = "/guilds/" + guildId;
+    const file = req.session.user!.files.find(f => f.name == req.params.name);
+    if (!file) {
+        error(req, "Erreur Interne : Fichier introuvable");
+        return res.redirect(returnURL);
+    }
+
+    if (!file.link_guilds.includes(guildId))
+        return next(createHttpError(404));
+
+    file.link_guilds.splice(file.link_guilds.indexOf(guildId), 1);
+    file.edited_at = new Date();
+    FileModel.editLinkGuilds(file);
+
+    success(req, "Fichier relié avec succès");
+    return res.redirect(returnURL);
+});
 
 export default guildRouter;

@@ -8,7 +8,13 @@ const env = load({
     CLIENT_ID: String,
     CLIENT_SECRET: String,
 
-    NODE_ENV: String
+    NODE_ENV: String,
+
+    MYSQL_HOST: String,
+    MYSQL_PORT: Number,
+    MYSQL_USER: String,
+    MYSQL_PASS: String,
+    MYSQL_DB: String,
 });
 
 export default env;
