@@ -5,7 +5,6 @@ import User from "../classes/User";
 import logger from "../logger";
 import { existsSync, mkdirSync } from "fs";
 import { FileModel } from "../models/FileModel";
-import { botGuilds } from "../data";
 
 const redirectURI = (!env.APP_URL.endsWith("/") ? env.APP_URL + "/" : env.APP_URL) + "oauth_redirect";
 
@@ -56,7 +55,7 @@ export async function oauthRedirect(req: Request, res: Response, next: NextFunct
     user.name = userInfo.global_name;
     user.avatar = userInfo.avatar;
 
-    user.guilds = (await getUserGuilds(user)).filter(g => botGuilds().includes(g.id));
+    user.guilds = (await getUserGuilds(user));
     user.files = await FileModel.getFilesByUploader(user.id);
 
     // Create data folder

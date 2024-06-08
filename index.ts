@@ -12,6 +12,7 @@ import { refreshToken } from "./utils/api";
 import guildRouter from "./controllers/guild";
 import fileRouter from "./controllers/file";
 import createHttpError, { HttpError } from "http-errors";
+import { botGuilds } from "./data";
 
 logger.info("Application starting...");
 const startTime = Date.now();
@@ -65,6 +66,7 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
     }
 
     // Add User Data //
+    req.session.user.guilds = req.session.user.guilds.filter(g => botGuilds().includes(g.id));
     res.locals.user = req.session.user;
 
     // Add Flash Message //
