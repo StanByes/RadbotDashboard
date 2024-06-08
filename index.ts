@@ -26,9 +26,10 @@ app.use(cookieParser());
 
 app.use(express.static("public"));
 app.set("view engine", "ejs");
+app.set("trust proxy", env.NODE_ENV == "production");
 
 // Session Configuration //
-app.use(session({secret: env.SESSION_SECRET, resave: true, saveUninitialized: false, cookie: { secure: process.env.NODE_ENV == "production" }}));
+app.use(session({secret: env.SESSION_SECRET, resave: true, saveUninitialized: false, cookie: { secure: env.NODE_ENV == "production" }}));
 
 declare module "express-session" {
     interface SessionData {
