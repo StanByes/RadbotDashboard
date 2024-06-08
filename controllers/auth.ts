@@ -60,8 +60,10 @@ export async function oauthRedirect(req: Request, res: Response, next: NextFunct
     user.files = await FileModel.getFilesByUploader(user.id);
 
     // Create data folder
-    if (!existsSync(`data/${user.id}/Soundboard`))
+    if (!existsSync(`data/${user.id}`)) {
+        mkdirSync(`data/${user.id}`);
         mkdirSync(`data/${user.id}/Soundboard`);
+    }
 
     req.session.user = user;
     req.session.regenerate(() => {
