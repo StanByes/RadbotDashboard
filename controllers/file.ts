@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { copyFile, copyFileSync, existsSync, lstatSync, renameSync, rmSync } from "fs";
+import { copyFile, existsSync, lstatSync, renameSync, rmSync } from "fs";
 import createHttpError from "http-errors";
 import multer from "multer";
 import path from "path";
