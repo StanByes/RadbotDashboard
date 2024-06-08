@@ -3,6 +3,7 @@ import File from "../classes/File";
 import { ResultSetHeader } from "mysql2";
 import { existsSync } from "fs";
 import { getFilePath, getFileStat } from "../data";
+import { publishMessage } from "./redis";
 
 const tableName = "files";
 
@@ -35,6 +36,7 @@ export namespace FileModel {
             values: [file.uploader_id, file.name, file.original_name, JSON.stringify(file.link_guilds)]
         });
 
+        publishMessage("Insert File");
         return res.affectedRows != 0;
     }
 
@@ -45,6 +47,7 @@ export namespace FileModel {
             values: [JSON.stringify(file.link_guilds), file.uploader_id, file.name]
         });
 
+        publishMessage("Edit File");
         return res.affectedRows != 0;
     }
 
@@ -55,6 +58,7 @@ export namespace FileModel {
             values: [newName, file.uploader_id, file.name]
         });
 
+        publishMessage("Edit File");
         return res.affectedRows != 0;
     }
 
@@ -65,6 +69,7 @@ export namespace FileModel {
             values: [file.uploader_id, file.name]
         });
 
+        publishMessage("Delete File");
         return res.affectedRows != 0;
     }
 }

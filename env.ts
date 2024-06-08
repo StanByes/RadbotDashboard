@@ -15,6 +15,10 @@ const env = load({
     MYSQL_USER: String,
     MYSQL_PASS: String,
     MYSQL_DB: String,
+
+    REDIS_HOST: String,
+    REDIS_PORT: Number,
+    REDIS_CHANNEL: String,
 });
 
 export default env;
