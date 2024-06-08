@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { existsSync, lstatSync, renameSync, rmSync } from "fs";
+import { copyFile, copyFileSync, existsSync, lstatSync, renameSync, rmSync } from "fs";
 import createHttpError from "http-errors";
 import multer from "multer";
 import path from "path";
@@ -46,7 +46,12 @@ fileRouter.post("/", multer({ dest: "uploads/"}).single("file"), async (req: Req
         return res.redirect(returnURL);
     }
 
-    renameSync(file.path, getFilePath(req.session.user!.id, name));
+    copyFile(file.path, getFilePath(req.session.user!.id, name), (err: any) => {
+        if (err)
+            throw err;
+
+        rmSync(file.path);
+    })
 
     const fileObj: File = {
         uploader_id: req.session.user!.id,
